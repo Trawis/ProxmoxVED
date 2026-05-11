@@ -14,6 +14,13 @@ var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 var_nesting="${var_nesting:-0}"
+var_fuse="${var_fuse:-no}"
+var_tun="${var_tun:-no}"
+var_gpu="${var_gpu:-no}"
+var_keyctl="${var_keyctl:-0}"
+var_mknod="${var_mknod:-0}"
+var_protection="${var_protection:-no}"
+var_ssh="${var_ssh:-no}"
 
 header_info "$APP"
 variables
