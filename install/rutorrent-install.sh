@@ -18,7 +18,6 @@ RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
 RUTORRENT_PLUGINS="${RUTORRENT_PLUGINS:-}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
-INSTALL_FTP="${INSTALL_FTP:-no}"
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
@@ -71,7 +70,7 @@ msg_info "Patching filedrop upload limit"
 FILEDROP_CONF=/var/www/rutorrent/plugins/filedrop/conf.php
 if [[ -f "${FILEDROP_CONF}" ]]; then
   UPLOAD_BYTES=$(( RUTORRENT_MAX_UPLOAD_MB * 1024 * 1024 ))
-  sed -i "s/\(\\\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
+  sed -i "s/\(\\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
 fi
 msg_ok "Patched filedrop (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
 
@@ -255,35 +254,6 @@ systemctl enable -q nginx
 systemctl start nginx
 msg_ok "Started services"
 
-if [[ "${INSTALL_FTP}" == "yes" ]]; then
-  msg_info "Installing vsftpd FTP server"
-  $STD apt install -y vsftpd
-  FTP_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)
-  useradd -r -s /usr/sbin/nologin -d /var/lib/rtorrent/downloads -M rutorrentftp 2>/dev/null || true
-  echo "rutorrentftp:${FTP_PASS}" | chpasswd
-  usermod -aG torrent rutorrentftp 2>/dev/null || true
-
-  cat <<'FTPEOF' >/etc/vsftpd.conf
-listen=YES
-anonymous_enable=NO
-local_enable=YES
-write_enable=YES
-local_umask=022
-chroot_local_user=YES
-allow_writeable_chroot=YES
-pasv_enable=YES
-pasv_min_port=40000
-pasv_max_port=40100
-userlist_enable=YES
-userlist_deny=NO
-userlist_file=/etc/vsftpd.userlist
-FTPEOF
-
-  echo "rutorrentftp" >/etc/vsftpd.userlist
-  systemctl enable -q --now vsftpd
-  msg_ok "Installed vsftpd"
-fi
-
 msg_info "Writing credentials"
 {
   echo "ruTorrent Credentials"
@@ -291,14 +261,6 @@ msg_info "Writing credentials"
   echo "URL:      http://$(hostname -I | awk '{print $1}')/rutorrent"
   echo "Username: ${RUTORRENT_USER}"
   echo "Password: ${RUTORRENT_PASS}"
-  if [[ "${INSTALL_FTP}" == "yes" ]]; then
-    echo ""
-    echo "FTP Credentials"
-    echo "==============="
-    echo "Host:     $(hostname -I | awk '{print $1}')"
-    echo "Username: rutorrentftp"
-    echo "Password: ${FTP_PASS}"
-  fi
 } >~/rutorrent.creds
 chmod 600 ~/rutorrent.creds
 msg_ok "Credentials written to ~/rutorrent.creds"

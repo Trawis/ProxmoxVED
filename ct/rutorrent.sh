@@ -107,21 +107,12 @@ if [[ -z "${RUTORRENT_PLUGINS}" ]]; then
     10 55 "32" --title "Upload Limit" 3>&1 1>&2 2>&3) || exit
   [[ -z "${RUTORRENT_MAX_UPLOAD_MB}" ]] && RUTORRENT_MAX_UPLOAD_MB=32
 
-  # Optional FTP
-  if whiptail --yesno \
-    "Install optional vsftpd FTP server?\n\n(uses a separate 'rutorrentftp' user and password)" \
-    10 55 --title "FTP Server" --defaultno 3>&1 1>&2 2>&3; then
-    INSTALL_FTP="yes"
-  else
-    INSTALL_FTP="no"
-  fi
 fi
 
 # Apply defaults for non-interactive / pre-seeded runs
 RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
-INSTALL_FTP="${INSTALL_FTP:-no}"
 
 # Warn about not-yet-implemented plugins and remove them from the selection
 for plugin in "${NOT_IMPLEMENTED_PLUGINS[@]}"; do
@@ -149,7 +140,7 @@ if [[ "${var_unprivileged}" == "1" ]] && [[ ${#PRIVILEGED_ONLY_PLUGINS[@]} -gt 0
   done
 fi
 
-export RUTORRENT_USER RUTORRENT_PLUGINS RUTORRENT_ENABLE_RPC2 RUTORRENT_MAX_UPLOAD_MB INSTALL_FTP
+export RUTORRENT_USER RUTORRENT_PLUGINS RUTORRENT_ENABLE_RPC2 RUTORRENT_MAX_UPLOAD_MB
 
 function update_script() {
   header_info
@@ -194,7 +185,3 @@ echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}/rutorrent${CL}"
 echo -e "${INFO}${YW} Web UI credentials are in ${BGN}~/rutorrent.creds${CL} inside the container.${CL}"
-if [[ "${INSTALL_FTP}" == "yes" ]]; then
-  echo -e "${INFO}${YW} FTP credentials are also in ${BGN}~/rutorrent.creds${CL}.${CL}"
-fi
-echo -e "${INFO}${YW} To add bind mounts for external storage, see the README.${CL}"
