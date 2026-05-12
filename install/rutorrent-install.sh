@@ -78,13 +78,12 @@ msg_info "Patching filedrop upload limit"
 FILEDROP_CONF=/var/www/rutorrent/plugins/filedrop/conf.php
 if [[ -f "${FILEDROP_CONF}" ]]; then
   UPLOAD_BYTES=$(( RUTORRENT_MAX_UPLOAD_MB * 1024 * 1024 ))
-  sed -i "s/\(\\\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
+  sed -i "s/\(\\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
 fi
 msg_ok "Patched filedrop (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
 
-msg_info "Generating plugins.ini"
+msg_info "Removing disabled plugins"
 PLUGINS_DIR=/var/www/rutorrent/plugins
-PLUGINS_INI="${PLUGINS_DIR}/plugins.ini"
 
 # Build lookup set of enabled slugs
 declare -A _ENABLED=()
@@ -93,19 +92,15 @@ for slug in "${_SEL[@]}"; do
   [[ -n "${slug}" ]] && _ENABLED["${slug}"]=1
 done
 
-: >"${PLUGINS_INI}"
+# Delete any plugin directory not in the enabled set so ruTorrent never loads it
 for plugin_dir in "${PLUGINS_DIR}"/*/; do
   slug=$(basename "${plugin_dir}")
-  # Only emit entries for directories that contain plugin JS
   [[ -f "${plugin_dir}/init.js" ]] || continue
-  if [[ "${_ENABLED[${slug}]+_}" ]]; then
-    printf '[%s]\nenabled = yes\n\n' "${slug}" >>"${PLUGINS_INI}"
-  else
-    printf '[%s]\nenabled = no\n\n' "${slug}" >>"${PLUGINS_INI}"
+  if [[ ! "${_ENABLED[${slug}]+_}" ]]; then
+    rm -rf "${plugin_dir}"
   fi
 done
-chown www-data:www-data "${PLUGINS_INI}"
-msg_ok "Generated plugins.ini"
+msg_ok "Removed disabled plugins"
 
 msg_info "Configuring rTorrent"
 RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
