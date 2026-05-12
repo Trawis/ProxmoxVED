@@ -71,6 +71,7 @@ PLUGIN_DEFS=(
   "retrackers|Retrackers|on"
   "rutracker_check|RuTracker Check|on"
   "uploadeta|Upload ETA|on"
+  "bulk_magnet|Bulk Magnet|on"
 )
 
 if [[ -z "${RUTORRENT_PLUGINS}" ]]; then
