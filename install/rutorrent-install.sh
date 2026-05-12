@@ -82,8 +82,9 @@ if [[ -f "${FILEDROP_CONF}" ]]; then
 fi
 msg_ok "Patched filedrop (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
 
-msg_info "Removing disabled plugins"
+msg_info "Generating plugins.ini"
 PLUGINS_DIR=/var/www/rutorrent/plugins
+PLUGINS_INI="/var/www/rutorrent/conf/plugins.ini"
 
 # Build lookup set of enabled slugs
 declare -A _ENABLED=()
@@ -92,15 +93,18 @@ for slug in "${_SEL[@]}"; do
   [[ -n "${slug}" ]] && _ENABLED["${slug}"]=1
 done
 
-# Delete any plugin directory not in the enabled set so ruTorrent never loads it
+: >"${PLUGINS_INI}"
 for plugin_dir in "${PLUGINS_DIR}"/*/; do
   slug=$(basename "${plugin_dir}")
   [[ -f "${plugin_dir}/init.js" ]] || continue
-  if [[ ! "${_ENABLED[${slug}]+_}" ]]; then
-    rm -rf "${plugin_dir}"
+  if [[ "${_ENABLED[${slug}]+_}" ]]; then
+    printf '[%s]\nenabled = yes\n\n' "${slug}" >>"${PLUGINS_INI}"
+  else
+    printf '[%s]\nenabled = no\n\n' "${slug}" >>"${PLUGINS_INI}"
   fi
 done
-msg_ok "Removed disabled plugins"
+chown www-data:www-data "${PLUGINS_INI}"
+msg_ok "Generated plugins.ini"
 
 msg_info "Configuring rTorrent"
 RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
