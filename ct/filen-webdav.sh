@@ -6,7 +6,7 @@ source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/misc/build.func")
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 # Source: https://github.com/FilenCloudDienste/filen-webdav
 
-APP="Filen WebDAV"
+APP="Filen-WebDAV"
 var_tags="${var_tags:-cloud;webdav;filen}"
 var_cpu="${var_cpu:-1}"
 var_ram="${var_ram:-512}"
