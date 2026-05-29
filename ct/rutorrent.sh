@@ -6,7 +6,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://github.com/Novik/ruTorrent
 
 APP="ruTorrent"
-var_tags="${var_tags:-}"
+var_tags="${var_tags:-torrent;bittorrent;download}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
@@ -162,27 +162,24 @@ function update_script() {
     exit
   fi
 
-  msg_info "Checking for ruTorrent Update"
-  CURRENT=$(cat /var/www/rutorrent/version.txt 2>/dev/null || echo "unknown")
-  LATEST=$(curl -fsSL https://api.github.com/repos/Novik/ruTorrent/releases/latest \
-    | grep '"tag_name"' | cut -d'"' -f4)
+  if check_for_gh_release "rutorrent" "Novik/ruTorrent"; then
+    msg_info "Backing up ruTorrent configuration"
+    cp /var/www/rutorrent/conf/config.php /tmp/rutorrent-config.php 2>/dev/null || true
+    cp /var/www/rutorrent/conf/plugins.ini /tmp/rutorrent-plugins.ini 2>/dev/null || true
+    msg_ok "Backed up ruTorrent configuration"
 
-  if [[ -z "${LATEST}" ]]; then
-    msg_error "Unable to determine latest ruTorrent release."
-    exit
+    CLEAN_INSTALL=1 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
+
+    msg_info "Restoring ruTorrent configuration"
+    [[ -f /tmp/rutorrent-config.php ]] && cp /tmp/rutorrent-config.php /var/www/rutorrent/conf/config.php
+    [[ -f /tmp/rutorrent-plugins.ini ]] && cp /tmp/rutorrent-plugins.ini /var/www/rutorrent/conf/plugins.ini
+    rm -f /tmp/rutorrent-config.php /tmp/rutorrent-plugins.ini
+    chown -R www-data:www-data /var/www/rutorrent
+    msg_ok "Restored ruTorrent configuration"
+
+    msg_ok "Updated ${APP} successfully"
   fi
 
-  if [[ "${CURRENT}" == "${LATEST}" ]]; then
-    msg_ok "ruTorrent is already up to date (${CURRENT})"
-    exit
-  fi
-
-  msg_info "Updating ruTorrent ${CURRENT} → ${LATEST}"
-  $STD git -C /var/www/rutorrent fetch --depth 1 origin "refs/tags/${LATEST}:refs/tags/${LATEST}"
-  $STD git -C /var/www/rutorrent checkout "${LATEST}"
-  echo "${LATEST}" >/var/www/rutorrent/version.txt
-  chown -R www-data:www-data /var/www/rutorrent
-  msg_ok "Updated ruTorrent to ${LATEST}"
   cleanup_lxc
   exit
 }
@@ -195,4 +192,4 @@ msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}/${CL}"
-echo -e "${INFO}${YW} Web UI credentials are in ${BGN}~/rutorrent.creds${CL} inside the container.${CL}"
+echo -e "${INFO}${YW} Web UI credentials — Username: ${BGN}${RUTORRENT_USER}${CL}${YW}  Password: ${BGN}${RUTORRENT_PASS}${CL}"

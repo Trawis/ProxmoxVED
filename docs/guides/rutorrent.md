@@ -53,11 +53,10 @@ The installer prompts for:
 
 ## First Login
 
-Credentials are saved inside the container at `~/rutorrent.creds`:
+Credentials are displayed in the Proxmox console at the end of installation. If you missed them, use the reconfigure tool to set a new password:
 
 ```bash
-# From the Proxmox host shell:
-pct exec <CTID> -- cat /root/rutorrent.creds
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/tools/addon/rutorrent.sh)"
 ```
 
 Then open `http://<container-ip>/` in your browser.
@@ -131,15 +130,15 @@ For additional disks use `-mp1`, `-mp2`, etc., mapping to `/data2`, `/data3`, �
 
 ### 3 — Fix ownership
 
-> **Unprivileged containers** shift UIDs by 100000. The `torrent` user (uid 999 inside
-> the container) appears as uid **100999** on the host.
+> **Unprivileged containers** shift UIDs by 100000. rTorrent runs as root (uid 0 inside
+> the container), which appears as uid **100000** on the host.
 
 ```bash
 # Unprivileged container (default)
-chown -R 100999:100999 /mnt/torrents
+chown -R 100000:100000 /mnt/torrents
 
 # Privileged container
-chown -R 999:999 /mnt/torrents
+chown -R 0:0 /mnt/torrents
 
 chmod 750 /mnt/torrents
 ```
@@ -296,7 +295,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/Proxmo
 | nginx shows default welcome page | nginx not reloaded after config write | `systemctl restart nginx` |
 | rTorrent socket missing after install | rTorrent failed to start | `systemctl status rtorrent` then check `/var/lib/rtorrent/.rtorrent.rc` |
 | Plugin shows “will not work” error | Missing dependency plugin | Check `plugins.ini` — `_task`, `ratio`, `rss` must be `enabled = yes` |
-| Downloads owned by wrong user | Mount point uid mismatch | Re-run `chown -R 100999:100999 <host-path>` (unprivileged) or `999:999` (privileged) |
+| Downloads owned by wrong user | Mount point uid mismatch | Re-run `chown -R 100000:100000 <host-path>` (unprivileged) or `chown -R 0:0` (privileged) |
 | `_cloudflare` plugin fails | Python dependencies missing | `apt install python3 python3-cloudscraper python-is-python3` inside the container |
 
 ### Check logs
