@@ -128,6 +128,15 @@ if [[ -z "${RUTORRENT_PLUGINS}" ]]; then
     10 55 "32" --title "Upload Limit" 3>&1 1>&2 2>&3) || exit
   [[ -z "${RUTORRENT_MAX_UPLOAD_MB}" ]] && RUTORRENT_MAX_UPLOAD_MB=32
 
+  # Service user
+  if whiptail --yesno \
+    "Run rTorrent as a dedicated 'torrent' system user?\n\n(Recommended: better security isolation and predictable\nuid 999 for bind mount ownership on the Proxmox host)" \
+    12 62 --title "Service User" 3>&1 1>&2 2>&3; then
+    RUTORRENT_SERVICE_USER="torrent"
+  else
+    RUTORRENT_SERVICE_USER="root"
+  fi
+
 fi
 
 # Apply defaults for non-interactive / pre-seeded runs
@@ -136,6 +145,7 @@ RUTORRENT_PASS="${RUTORRENT_PASS:-}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
+RUTORRENT_SERVICE_USER="${RUTORRENT_SERVICE_USER:-torrent}"
 
 # Strip plugins that require a privileged container when running unprivileged.
 # Add slug names to PRIVILEGED_ONLY_PLUGINS as needed.
@@ -150,7 +160,7 @@ if [[ "${var_unprivileged}" == "1" ]] && [[ ${#PRIVILEGED_ONLY_PLUGINS[@]} -gt 0
   done
 fi
 
-export RUTORRENT_USER RUTORRENT_PASS RUTORRENT_PLUGINS RUTORRENT_ENABLE_RPC2 RUTORRENT_ENABLE_REAL_IP RUTORRENT_MAX_UPLOAD_MB
+export RUTORRENT_USER RUTORRENT_PASS RUTORRENT_PLUGINS RUTORRENT_ENABLE_RPC2 RUTORRENT_ENABLE_REAL_IP RUTORRENT_MAX_UPLOAD_MB RUTORRENT_SERVICE_USER
 
 function update_script() {
   header_info

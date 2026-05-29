@@ -20,6 +20,7 @@ RUTORRENT_PLUGINS="${RUTORRENT_PLUGINS:-}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
+RUTORRENT_SERVICE_USER="${RUTORRENT_SERVICE_USER:-torrent}"
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
@@ -41,18 +42,25 @@ msg_ok "Installed Dependencies"
 PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
-msg_info "Creating torrent user"
-useradd -r -s /bin/false -d /var/lib/rtorrent -m torrent 2>/dev/null || true
-usermod -aG torrent www-data 2>/dev/null || true
-msg_ok "Created torrent user"
+if [[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]]; then
+  msg_info "Creating torrent user"
+  useradd -r -s /bin/false -d /var/lib/rtorrent -m torrent 2>/dev/null || true
+  usermod -aG torrent www-data 2>/dev/null || true
+  msg_ok "Created torrent user"
+fi
 
 msg_info "Setting up directories"
 mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
-chown -R torrent:torrent /var/lib/rtorrent
+if [[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]]; then
+  chown -R torrent:torrent /var/lib/rtorrent
+fi
 chmod 750 /var/lib/rtorrent
 for i in "" 2 3 4 5 6 7 8; do
   mp="/data${i}"
-  [[ -d "${mp}" ]] && chown torrent:torrent "${mp}" 2>/dev/null || true
+  if [[ -d "${mp}" ]]; then
+    [[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]] && chown torrent:torrent "${mp}" 2>/dev/null || true
+    chmod 750 "${mp}" 2>/dev/null || true
+  fi
 done
 msg_ok "Set up directories"
 
@@ -98,6 +106,8 @@ msg_ok "Generated plugins.ini"
 
 msg_info "Configuring rTorrent"
 RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
+RTORRENT_SOCK_CHMOD=$([[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]] && echo "770" || echo "666")
+RTORRENT_RUNTIME_MODE=$([[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]] && echo "0750" || echo "0755")
 cat <<EOF >"${RTORRENT_RC}"
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
@@ -106,22 +116,22 @@ network.port_range.set = 6881-6881
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
-execute.nothrow = chmod,770,/run/rtorrent/rtorrent.sock
+execute.nothrow = chmod,${RTORRENT_SOCK_CHMOD},/run/rtorrent/rtorrent.sock
 EOF
-chown torrent:torrent "${RTORRENT_RC}"
+[[ "${RUTORRENT_SERVICE_USER}" == "torrent" ]] && chown torrent:torrent "${RTORRENT_RC}"
 
-cat <<'EOF' >/etc/systemd/system/rtorrent.service
+cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
 Description=rTorrent via screen
 After=network.target
 
 [Service]
-User=torrent
-Group=torrent
+User=${RUTORRENT_SERVICE_USER}
+Group=${RUTORRENT_SERVICE_USER}
 Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
-RuntimeDirectoryMode=0750
+RuntimeDirectoryMode=${RTORRENT_RUNTIME_MODE}
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
