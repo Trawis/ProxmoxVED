@@ -129,16 +129,10 @@ if [[ -z "${RUTORRENT_PLUGINS}" ]]; then
   [[ -z "${RUTORRENT_MAX_UPLOAD_MB}" ]] && RUTORRENT_MAX_UPLOAD_MB=32
 
   # Service user
-  if whiptail --yesno \
-    "Run rTorrent as a dedicated system user?\n\n(Recommended: better security isolation and predictable\nuid for bind mount ownership on the Proxmox host)" \
-    12 62 --title "Service User" 3>&1 1>&2 2>&3; then
-    RUTORRENT_SERVICE_USER=$(whiptail --inputbox \
-      "rTorrent service username:" 8 40 "torrent" \
-      --title "Service User" 3>&1 1>&2 2>&3) || exit
-    [[ -z "${RUTORRENT_SERVICE_USER}" ]] && RUTORRENT_SERVICE_USER="torrent"
-  else
-    RUTORRENT_SERVICE_USER="root"
-  fi
+  RUTORRENT_SERVICE_USER=$(whiptail --inputbox \
+    "rTorrent system service username:\n\n(a dedicated user is created with this name)" \
+    9 52 "torrent" --title "Service User" 3>&1 1>&2 2>&3) || exit
+  [[ -z "${RUTORRENT_SERVICE_USER}" ]] && RUTORRENT_SERVICE_USER="torrent"
 
 fi
 
@@ -149,6 +143,7 @@ RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
 RUTORRENT_SERVICE_USER="${RUTORRENT_SERVICE_USER:-torrent}"
+[[ "${RUTORRENT_SERVICE_USER}" == "root" ]] && RUTORRENT_SERVICE_USER="torrent"
 
 # Strip plugins that require a privileged container when running unprivileged.
 # Add slug names to PRIVILEGED_ONLY_PLUGINS as needed.

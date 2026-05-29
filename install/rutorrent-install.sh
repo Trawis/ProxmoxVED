@@ -42,23 +42,19 @@ msg_ok "Installed Dependencies"
 PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
-if [[ "${RUTORRENT_SERVICE_USER}" != "root" ]]; then
-  msg_info "Creating ${RUTORRENT_SERVICE_USER} user"
-  useradd -r -s /bin/false -d /var/lib/rtorrent -m "${RUTORRENT_SERVICE_USER}" 2>/dev/null || true
-  usermod -aG "${RUTORRENT_SERVICE_USER}" www-data 2>/dev/null || true
-  msg_ok "Created ${RUTORRENT_SERVICE_USER} user"
-fi
+msg_info "Creating ${RUTORRENT_SERVICE_USER} user"
+useradd -r -s /bin/false -d /var/lib/rtorrent -m "${RUTORRENT_SERVICE_USER}" 2>/dev/null || true
+usermod -aG "${RUTORRENT_SERVICE_USER}" www-data 2>/dev/null || true
+msg_ok "Created ${RUTORRENT_SERVICE_USER} user"
 
 msg_info "Setting up directories"
 mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
-if [[ "${RUTORRENT_SERVICE_USER}" != "root" ]]; then
-  chown -R "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" /var/lib/rtorrent
-fi
+chown -R "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" /var/lib/rtorrent
 chmod 750 /var/lib/rtorrent
 for i in "" 2 3 4 5 6 7 8; do
   mp="/data${i}"
   if [[ -d "${mp}" ]]; then
-    [[ "${RUTORRENT_SERVICE_USER}" != "root" ]] && chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${mp}" 2>/dev/null || true
+    chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${mp}" 2>/dev/null || true
     chmod 750 "${mp}" 2>/dev/null || true
   fi
 done
@@ -106,8 +102,8 @@ msg_ok "Generated plugins.ini"
 
 msg_info "Configuring rTorrent"
 RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
-RTORRENT_SOCK_CHMOD=$([[ "${RUTORRENT_SERVICE_USER}" != "root" ]] && echo "770" || echo "666")
-RTORRENT_RUNTIME_MODE=$([[ "${RUTORRENT_SERVICE_USER}" != "root" ]] && echo "0750" || echo "0755")
+RTORRENT_SOCK_CHMOD="770"
+RTORRENT_RUNTIME_MODE="0750"
 cat <<EOF >"${RTORRENT_RC}"
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
@@ -118,7 +114,7 @@ pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
 execute.nothrow = chmod,${RTORRENT_SOCK_CHMOD},/run/rtorrent/rtorrent.sock
 EOF
-[[ "${RUTORRENT_SERVICE_USER}" != "root" ]] && chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${RTORRENT_RC}"
+chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${RTORRENT_RC}"
 
 cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
