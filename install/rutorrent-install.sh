@@ -41,12 +41,18 @@ msg_ok "Installed Dependencies"
 PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
+msg_info "Creating torrent user"
+useradd -r -s /bin/false -d /var/lib/rtorrent -m torrent 2>/dev/null || true
+usermod -aG torrent www-data 2>/dev/null || true
+msg_ok "Created torrent user"
+
 msg_info "Setting up directories"
 mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
+chown -R torrent:torrent /var/lib/rtorrent
 chmod 750 /var/lib/rtorrent
 for i in "" 2 3 4 5 6 7 8; do
   mp="/data${i}"
-  [[ -d "${mp}" ]] && chmod 750 "${mp}" 2>/dev/null || true
+  [[ -d "${mp}" ]] && chown torrent:torrent "${mp}" 2>/dev/null || true
 done
 msg_ok "Set up directories"
 
@@ -100,8 +106,9 @@ network.port_range.set = 6881-6881
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
-execute.nothrow = chmod,666,/run/rtorrent/rtorrent.sock
+execute.nothrow = chmod,770,/run/rtorrent/rtorrent.sock
 EOF
+chown torrent:torrent "${RTORRENT_RC}"
 
 cat <<'EOF' >/etc/systemd/system/rtorrent.service
 [Unit]
@@ -109,12 +116,12 @@ Description=rTorrent via screen
 After=network.target
 
 [Service]
-User=root
-Group=root
+User=torrent
+Group=torrent
 Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
-RuntimeDirectoryMode=0755
+RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
