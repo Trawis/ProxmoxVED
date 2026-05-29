@@ -102,8 +102,6 @@ msg_ok "Generated plugins.ini"
 
 msg_info "Configuring rTorrent"
 RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
-RTORRENT_SOCK_CHMOD="770"
-RTORRENT_RUNTIME_MODE="0750"
 cat <<EOF >"${RTORRENT_RC}"
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
@@ -112,7 +110,7 @@ network.port_range.set = 6881-6881
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
-execute.nothrow = chmod,${RTORRENT_SOCK_CHMOD},/run/rtorrent/rtorrent.sock
+execute.nothrow = chmod,770,/run/rtorrent/rtorrent.sock
 EOF
 chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${RTORRENT_RC}"
 
@@ -127,7 +125,7 @@ Group=${RUTORRENT_SERVICE_USER}
 Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
-RuntimeDirectoryMode=${RTORRENT_RUNTIME_MODE}
+RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
