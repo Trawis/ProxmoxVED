@@ -20,8 +20,7 @@ FILEN_PASS="${FILEN_PASS:-}"
 FILEN_2FA="${FILEN_2FA:-}"
 
 msg_info "Installing Node.js"
-$STD curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-$STD apt-get install -y nodejs
+$STD apt-get install -y nodejs npm
 msg_ok "Installed Node.js $(node -v)"
 
 msg_info "Installing Filen WebDAV"
