@@ -4,16 +4,8 @@
 # Author: Trawis
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
 
-if command -v curl >/dev/null 2>&1; then
-  source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/core.func)
-  load_functions
-elif command -v wget >/dev/null 2>&1; then
-  source <(wget -qO- https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/core.func)
-  load_functions
-else
-  echo "Neither curl nor wget found. Cannot source core functions." >&2
-  exit 1
-fi
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/core.func)
+load_functions
 
 function header_info() {
   clear
