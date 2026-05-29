@@ -271,6 +271,17 @@ systemctl enable -q nginx
 systemctl restart nginx
 msg_ok "Started services"
 
+msg_info "Writing credentials"
+{
+  echo "ruTorrent Credentials"
+  echo "====================="
+  echo "URL:      http://$(hostname -I | awk '{print $1}')/"
+  echo "Username: ${RUTORRENT_USER}"
+  echo "Password: ${RUTORRENT_PASS}"
+} >~/rutorrent.creds
+chmod 600 ~/rutorrent.creds
+msg_ok "Credentials written to ~/rutorrent.creds"
+
 motd_ssh
 customize
 cleanup_lxc

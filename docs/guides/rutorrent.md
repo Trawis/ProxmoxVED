@@ -53,10 +53,11 @@ The installer prompts for:
 
 ## First Login
 
-Credentials are displayed in the Proxmox console at the end of installation. If you missed them, use the reconfigure tool to set a new password:
+Credentials are saved inside the container at `~/rutorrent.creds`:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/tools/addon/rutorrent.sh)"
+# From the Proxmox host shell:
+pct exec <CTID> -- cat /root/rutorrent.creds
 ```
 
 Then open `http://<container-ip>/` in your browser.
