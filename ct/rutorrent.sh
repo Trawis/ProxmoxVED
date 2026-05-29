@@ -6,21 +6,13 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://github.com/Novik/ruTorrent
 
 APP="ruTorrent"
-var_tags="${var_tags:-torrent;bittorrent;rtorrent}"
+var_tags="${var_tags:-}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
-var_nesting="${var_nesting:-0}"
-var_fuse="${var_fuse:-no}"
-var_tun="${var_tun:-no}"
-var_gpu="${var_gpu:-no}"
-var_keyctl="${var_keyctl:-0}"
-var_mknod="${var_mknod:-0}"
-var_protection="${var_protection:-no}"
-var_ssh="${var_ssh:-no}"
 
 header_info "$APP"
 variables
@@ -191,6 +183,7 @@ function update_script() {
   echo "${LATEST}" >/var/www/rutorrent/version.txt
   chown -R www-data:www-data /var/www/rutorrent
   msg_ok "Updated ruTorrent to ${LATEST}"
+  cleanup_lxc
   exit
 }
 
