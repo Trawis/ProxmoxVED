@@ -130,9 +130,12 @@ if [[ -z "${RUTORRENT_PLUGINS}" ]]; then
 
   # Service user
   if whiptail --yesno \
-    "Run rTorrent as a dedicated 'torrent' system user?\n\n(Recommended: better security isolation and predictable\nuid 999 for bind mount ownership on the Proxmox host)" \
+    "Run rTorrent as a dedicated system user?\n\n(Recommended: better security isolation and predictable\nuid for bind mount ownership on the Proxmox host)" \
     12 62 --title "Service User" 3>&1 1>&2 2>&3; then
-    RUTORRENT_SERVICE_USER="torrent"
+    RUTORRENT_SERVICE_USER=$(whiptail --inputbox \
+      "rTorrent service username:" 8 40 "torrent" \
+      --title "Service User" 3>&1 1>&2 2>&3) || exit
+    [[ -z "${RUTORRENT_SERVICE_USER}" ]] && RUTORRENT_SERVICE_USER="torrent"
   else
     RUTORRENT_SERVICE_USER="root"
   fi
