@@ -29,7 +29,7 @@ catch_errors
 
 if [[ -z "${FILEN_MODE}" ]]; then
   FILEN_MODE=$(whiptail --radiolist \
-    "Select server mode:" 12 55 2 \
+    "Select server mode:" 12 80 2 \
     "proxy"      "Proxy — users auth with their own Filen credentials" ON \
     "standalone" "Standalone — single pre-configured Filen account"    OFF \
     --title "Server Mode" 3>&1 1>&2 2>&3) || exit
