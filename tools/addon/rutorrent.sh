@@ -325,7 +325,8 @@ action_show_status() {
     msg_error "~/rutorrent.creds not found"
   fi
   echo ""
-  read -rp "Press Enter to continue..."
+  msg_ok "Press Enter to return to menu"
+  read -rp ""
 }
 
 # --- Main ---
