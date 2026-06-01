@@ -19,13 +19,10 @@ function header_info() {
 EOF
 }
 
+root_check
+
 if [[ ! -d /var/www/rutorrent ]]; then
   msg_error "No ruTorrent installation found. Run this script inside the ruTorrent container."
-  exit 1
-fi
-
-if [[ $EUID -ne 0 ]]; then
-  msg_error "Run as root."
   exit 1
 fi
 
