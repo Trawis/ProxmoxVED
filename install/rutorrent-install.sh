@@ -21,7 +21,6 @@ $STD apt install -y \
   apache2-utils \
   unrar-free \
   mediainfo \
-  python3 \
   python3-cloudscraper \
   python-is-python3 \
   sox
@@ -36,7 +35,7 @@ chown -R www-data:www-data /var/www/rutorrent
 
 msg_info "Configuring rTorrent"
 mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
-cat <<EOF >/var/lib/rtorrent/.rtorrent.rc
+cat <<EOF >/root/.rtorrent.rc
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
 network.scgi.open_local = /run/rtorrent/rtorrent.sock
@@ -58,7 +57,6 @@ Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
 RuntimeDirectoryMode=0755
-ExecStartPre=/bin/mkdir -p /run/rtorrent
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
