@@ -58,9 +58,11 @@ Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
 RuntimeDirectoryMode=0755
+ExecStartPre=/bin/mkdir -p /run/rtorrent
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
+TimeoutStartSec=10
 Restart=on-failure
 RestartSec=5
 
@@ -150,14 +152,14 @@ rm -f /etc/nginx/sites-enabled/default
 msg_ok "Configured nginx"
 
 msg_info "Starting Services"
-for i in {1..15}; do
+systemctl restart "php${PHP_VER}-fpm"
+systemctl restart nginx
+for i in {1..20}; do
   [[ -S /run/rtorrent/rtorrent.sock ]] && break
   sleep 1
 done
 [[ -S /run/rtorrent/rtorrent.sock ]] \
-  || msg_warn "rTorrent socket not found after 15 s — check 'systemctl status rtorrent'"
-systemctl restart "php${PHP_VER}-fpm"
-systemctl enable -q --now nginx
+  || msg_warn "rTorrent socket not found after 20 s — check 'systemctl status rtorrent'"
 msg_ok "Started Services"
 
 motd_ssh
