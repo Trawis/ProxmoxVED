@@ -10,7 +10,7 @@
     "documentation": "https://github.com/FilenCloudDienste/filen-webdav",
     "website": "https://filen.io",
     "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/filen.webp",
-    "description": "Filen WebDAV exposes your Filen cloud storage as a standard WebDAV endpoint. It supports proxy mode (each client authenticates with their own Filen account) and standalone mode (a single pre-configured account). Any WebDAV-compatible client — including Finder, Windows Explorer, rclone, and Infuse — can mount the share directly.",
+    "description": "Filen WebDAV exposes your Filen cloud storage as a standard WebDAV endpoint running in proxy mode. Each WebDAV client authenticates with their own Filen credentials — no credentials are stored on the container. Any WebDAV-compatible client — including Finder, Windows Explorer, rclone, and Infuse — can mount the share directly.",
     "install_methods": [
         {
             "type": "default",
@@ -26,17 +26,13 @@
         }
     ],
     "default_credentials": {
-        "username": "your Filen account email",
-        "password": "your Filen account password"
+        "username": null,
+        "password": null
     },
     "notes": [
         {
-            "text": "In proxy mode (default) each WebDAV client authenticates with their own Filen email and password. No credentials are stored on the container.",
+            "text": "Each WebDAV client authenticates with their own Filen email and password. No credentials are stored on the container.",
             "type": "info"
-        },
-        {
-            "text": "In standalone mode the Filen account credentials are written to /opt/filen-webdav/server.js (mode 600). Treat this file like a secrets file.",
-            "type": "warning"
         },
         {
             "text": "HTTPS is not enabled by default. Place a reverse proxy (nginx, Caddy, or NPM) in front if the server is reachable from outside your LAN.",
