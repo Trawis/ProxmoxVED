@@ -33,10 +33,6 @@
         {
             "text": "Web UI credentials are displayed in the Proxmox console at the end of installation.",
             "type": "info"
-        },
-        {
-            "text": "The /RPC2 XMLRPC endpoint (required for Sonarr, Radarr, autodl-irssi) is disabled by default. Set RUTORRENT_ENABLE_RPC2=yes before install to enable it.",
-            "type": "info"
         }
     ]
 }
