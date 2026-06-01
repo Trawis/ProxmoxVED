@@ -61,6 +61,7 @@ done
 msg_ok "Set up directories"
 
 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
+[[ -f /var/www/rutorrent/index.html ]] || { msg_error "ruTorrent download failed — check network and GitHub API availability"; exit 1; }
 chown -R www-data:www-data /var/www/rutorrent
 
 msg_info "Patching filedrop upload limit"
