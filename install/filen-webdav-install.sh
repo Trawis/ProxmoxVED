@@ -13,12 +13,6 @@ setting_up_container
 network_check
 update_os
 
-FILEN_MODE="${FILEN_MODE:-proxy}"
-FILEN_PORT="${FILEN_PORT:-1900}"
-FILEN_EMAIL="${FILEN_EMAIL:-}"
-FILEN_PASS="${FILEN_PASS:-}"
-FILEN_2FA="${FILEN_2FA:-}"
-
 NODE_VERSION="20" setup_nodejs
 
 msg_info "Installing Filen WebDAV"
@@ -28,53 +22,23 @@ $STD npm install @filen/webdav@latest
 msg_ok "Installed Filen WebDAV"
 
 msg_info "Writing server configuration"
-if [[ "${FILEN_MODE}" == "standalone" ]]; then
-  if [[ -n "${FILEN_2FA}" ]]; then
-    TFA_LINE="  twoFactorCode: \"${FILEN_2FA}\","
-  else
-    TFA_LINE=""
-  fi
-
-  cat <<EOF >/opt/filen-webdav/server.js
-const { WebDAVServer } = require("@filen/webdav")
-
-const server = new WebDAVServer({
-  hostname: "0.0.0.0",
-  port: ${FILEN_PORT},
-  https: false,
-  auth: "basic",
-  mode: "standalone",
-  user: {
-    email: "${FILEN_EMAIL}",
-    password: "${FILEN_PASS}",
-${TFA_LINE}
-  },
-})
-
-server.start()
-  .then(() => console.log("Filen WebDAV running on port ${FILEN_PORT}"))
-  .catch((err) => { console.error(err); process.exit(1) })
-EOF
-else
-  cat <<EOF >/opt/filen-webdav/server.js
+cat <<EOF >/opt/filen-webdav/server.js
 const { WebDAVServer } = require("@filen/webdav")
 
 // Proxy mode — each WebDAV client authenticates with their own Filen credentials.
 const server = new WebDAVServer({
   hostname: "0.0.0.0",
-  port: ${FILEN_PORT},
+  port: 1900,
   https: false,
   auth: "basic",
   mode: "proxy",
 })
 
 server.start()
-  .then(() => console.log("Filen WebDAV running on port ${FILEN_PORT}"))
+  .then(() => console.log("Filen WebDAV running on port 1900"))
   .catch((err) => { console.error(err); process.exit(1) })
 EOF
-fi
-chmod 600 /opt/filen-webdav/server.js
-msg_ok "Written server.js (mode: ${FILEN_MODE}, port: ${FILEN_PORT})"
+msg_ok "Written server.js"
 
 msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/filen-webdav.service

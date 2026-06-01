@@ -15,45 +15,13 @@ var_version="${var_version:-13}"
 var_arm64="${var_arm64:-no}"
 var_unprivileged="${var_unprivileged:-1}"
 
+# Always pull the install script from this branch
+COMMUNITY_SCRIPTS_URL="https://raw.githubusercontent.com/Trawis/ProxmoxVED/feature/filen-webdav"
+
 header_info "$APP"
 variables
 color
 catch_errors
-
-if [[ -z "${FILEN_MODE}" ]]; then
-  FILEN_MODE=$(whiptail --radiolist \
-    "Select server mode:" 12 80 2 \
-    "proxy"      "Proxy — users auth with their own Filen credentials" ON \
-    "standalone" "Standalone — single pre-configured Filen account"    OFF \
-    --title "Server Mode" 3>&1 1>&2 2>&3) || exit
-
-  if [[ "${FILEN_MODE}" == "standalone" ]]; then
-    FILEN_EMAIL=$(whiptail --inputbox \
-      "Filen account email:" 8 50 "" \
-      --title "Filen Email" 3>&1 1>&2 2>&3) || exit
-
-    FILEN_PASS=$(whiptail --passwordbox \
-      "Filen account password:" 8 50 \
-      --title "Filen Password" 3>&1 1>&2 2>&3) || exit
-
-    FILEN_2FA=$(whiptail --inputbox \
-      "Two-factor code (leave blank if 2FA is disabled):" 8 55 "" \
-      --title "2FA Code" 3>&1 1>&2 2>&3) || exit
-  fi
-
-  FILEN_PORT=$(whiptail --inputbox \
-    "WebDAV listen port:" 8 40 "1900" \
-    --title "Port" 3>&1 1>&2 2>&3) || exit
-  [[ -z "${FILEN_PORT}" ]] && FILEN_PORT="1900"
-fi
-
-FILEN_MODE="${FILEN_MODE:-proxy}"
-FILEN_PORT="${FILEN_PORT:-1900}"
-FILEN_EMAIL="${FILEN_EMAIL:-}"
-FILEN_PASS="${FILEN_PASS:-}"
-FILEN_2FA="${FILEN_2FA:-}"
-
-export FILEN_MODE FILEN_PORT FILEN_EMAIL FILEN_PASS FILEN_2FA
 
 function update_script() {
   header_info
@@ -83,4 +51,5 @@ description
 msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:${FILEN_PORT}${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:1900${CL}"
+echo -e "${INFO}${YW} Proxy mode: connect with your Filen email and password as WebDAV credentials.${CL}"
