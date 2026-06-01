@@ -19,9 +19,7 @@ FILEN_EMAIL="${FILEN_EMAIL:-}"
 FILEN_PASS="${FILEN_PASS:-}"
 FILEN_2FA="${FILEN_2FA:-}"
 
-msg_info "Installing Node.js"
-$STD apt-get install -y nodejs npm
-msg_ok "Installed Node.js $(node -v)"
+NODE_VERSION="20" setup_nodejs
 
 msg_info "Installing Filen WebDAV"
 mkdir -p /opt/filen-webdav
@@ -86,11 +84,11 @@ After=network.target
 
 [Service]
 Type=simple
+User=root
 WorkingDirectory=/opt/filen-webdav
 ExecStart=/usr/bin/node /opt/filen-webdav/server.js
 Restart=on-failure
 RestartSec=5
-KillMode=process
 
 [Install]
 WantedBy=multi-user.target

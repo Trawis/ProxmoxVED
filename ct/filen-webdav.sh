@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main}"
-source <(curl -fsSL "${COMMUNITY_SCRIPTS_URL}/misc/build.func")
+source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVED/main/misc/build.func)
 # Copyright (c) 2021-2026 community-scripts ORG
 # Author: Trawis
 # License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
@@ -13,15 +12,8 @@ var_ram="${var_ram:-512}"
 var_disk="${var_disk:-4}"
 var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
+var_arm64="${var_arm64:-no}"
 var_unprivileged="${var_unprivileged:-1}"
-var_nesting="${var_nesting:-0}"
-var_fuse="${var_fuse:-no}"
-var_tun="${var_tun:-no}"
-var_gpu="${var_gpu:-no}"
-var_keyctl="${var_keyctl:-0}"
-var_mknod="${var_mknod:-0}"
-var_protection="${var_protection:-no}"
-var_ssh="${var_ssh:-no}"
 
 header_info "$APP"
 variables
