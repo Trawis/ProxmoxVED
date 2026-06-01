@@ -27,19 +27,19 @@
     ],
     "default_credentials": {
         "username": "rutorrent",
-        "password": "Randomly generated — see ~/rutorrent.creds inside the container"
+        "password": null
     },
     "notes": [
         {
-            "text": "Web UI credentials (username and password) are stored in ~/rutorrent.creds inside the container.",
+            "text": "Web UI credentials are displayed in the Proxmox console at the end of installation.",
             "type": "info"
         },
         {
-            "text": "The /RPC2 XMLRPC endpoint is disabled by default. Enable it during setup if you use Sonarr, Radarr, or autodl-irssi.",
+            "text": "The /RPC2 XMLRPC endpoint is disabled by default. Use the reconfigure tool to enable it for Sonarr, Radarr, or autodl-irssi.",
             "type": "info"
         },
         {
-            "text": "Real IP forwarding is disabled by default. Enable it during setup only if nginx is behind a reverse proxy (Traefik, Cloudflare, NPM, etc.).",
+            "text": "Real IP forwarding is disabled by default. Enable it via the reconfigure tool only if nginx is behind a reverse proxy (Traefik, Cloudflare, NPM, etc.).",
             "type": "info"
         }
     ]

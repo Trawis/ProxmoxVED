@@ -13,14 +13,11 @@ setting_up_container
 network_check
 update_os
 
-# Passed in from ct script via build.func environment
 RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
-RUTORRENT_PASS="${RUTORRENT_PASS:-}"
-RUTORRENT_PLUGINS="${RUTORRENT_PLUGINS:-}"
+RUTORRENT_PASS="${RUTORRENT_PASS:-$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
 RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
-RUTORRENT_SERVICE_USER="torrent"
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
@@ -29,7 +26,6 @@ $STD apt install -y \
   nginx \
   openssl \
   apache2-utils \
-  curl \
   unrar-free \
   mediainfo \
   ffmpeg \
@@ -42,20 +38,13 @@ msg_ok "Installed Dependencies"
 PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
-msg_info "Creating ${RUTORRENT_SERVICE_USER} user"
-useradd -r -s /bin/false -d /var/lib/rtorrent -m "${RUTORRENT_SERVICE_USER}" 2>/dev/null || true
-usermod -aG "${RUTORRENT_SERVICE_USER}" www-data 2>/dev/null || true
-msg_ok "Created ${RUTORRENT_SERVICE_USER} user"
-
 msg_info "Setting up directories"
 mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
-chown -R "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" /var/lib/rtorrent
-chmod 750 /var/lib/rtorrent
+chmod 755 /var/lib/rtorrent
 for i in "" 2 3 4 5 6 7 8; do
   mp="/data${i}"
   if [[ -d "${mp}" ]]; then
-    chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${mp}" 2>/dev/null || true
-    chmod 750 "${mp}" 2>/dev/null || true
+    chmod 755 "${mp}" 2>/dev/null || true
   fi
 done
 msg_ok "Set up directories"
@@ -68,8 +57,7 @@ msg_info "Patching filedrop upload limit"
 FILEDROP_CONF=/var/www/rutorrent/plugins/filedrop/conf.php
 if [[ -f "${FILEDROP_CONF}" ]]; then
   UPLOAD_BYTES=$(( RUTORRENT_MAX_UPLOAD_MB * 1024 * 1024 ))
-  FILEDROP_PAT='\(\$maxFileSize\s*=\s*\)'
-  sed -i "s/${FILEDROP_PAT}[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
+  sed -i "s/\(\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
 fi
 msg_ok "Patched filedrop (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
 
@@ -77,33 +65,23 @@ msg_info "Generating plugins.ini"
 PLUGINS_DIR=/var/www/rutorrent/plugins
 PLUGINS_INI="/var/www/rutorrent/conf/plugins.ini"
 
-declare -A _ENABLED=()
-IFS=',' read -ra _SEL <<<"${RUTORRENT_PLUGINS}"
-for slug in "${_SEL[@]}"; do
-  [[ -n "${slug}" ]] && _ENABLED["${slug}"]=1
-done
-
-for plugin_dir in "${PLUGINS_DIR}"/_*/; do
-  slug=$(basename "${plugin_dir}")
-  [[ -f "${plugin_dir}/init.js" ]] && _ENABLED["${slug}"]=1
-done
+declare -A _BROKEN=([throttle]=1 [xmpp]=1 [dump]=1)
 
 : >"${PLUGINS_INI}"
 for plugin_dir in "${PLUGINS_DIR}"/*/; do
   slug=$(basename "${plugin_dir}")
   [[ -f "${plugin_dir}/init.js" ]] || continue
-  if [[ "${_ENABLED[${slug}]+_}" ]]; then
-    printf '[%s]\nenabled = yes\n\n' "${slug}" >>"${PLUGINS_INI}"
-  else
+  if [[ "${_BROKEN[${slug}]+_}" ]]; then
     printf '[%s]\nenabled = no\n\n' "${slug}" >>"${PLUGINS_INI}"
+  else
+    printf '[%s]\nenabled = yes\n\n' "${slug}" >>"${PLUGINS_INI}"
   fi
 done
 chown www-data:www-data "${PLUGINS_INI}"
 msg_ok "Generated plugins.ini"
 
 msg_info "Configuring rTorrent"
-RTORRENT_RC=/var/lib/rtorrent/.rtorrent.rc
-cat <<EOF >"${RTORRENT_RC}"
+cat <<EOF >/var/lib/rtorrent/.rtorrent.rc
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
 network.scgi.open_local = /run/rtorrent/rtorrent.sock
@@ -111,9 +89,8 @@ network.port_range.set = 6881-6881
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
-execute.nothrow = chmod,770,/run/rtorrent/rtorrent.sock
+execute.nothrow = chmod,666,/run/rtorrent/rtorrent.sock
 EOF
-chown "${RUTORRENT_SERVICE_USER}:${RUTORRENT_SERVICE_USER}" "${RTORRENT_RC}"
 
 cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
@@ -121,12 +98,12 @@ Description=rTorrent via screen
 After=network.target
 
 [Service]
-User=${RUTORRENT_SERVICE_USER}
-Group=${RUTORRENT_SERVICE_USER}
+User=root
+Group=root
 Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
-RuntimeDirectoryMode=0750
+RuntimeDirectoryMode=0755
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 WorkingDirectory=/var/lib/rtorrent
@@ -161,7 +138,6 @@ chown www-data:www-data /var/www/rutorrent/conf/config.php
 msg_ok "Configured ruTorrent"
 
 msg_info "Setting up HTTP basic auth"
-[[ -z "${RUTORRENT_PASS}" ]] && RUTORRENT_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)
 htpasswd -bc /etc/nginx/.rutorrent_htpasswd "${RUTORRENT_USER}" "${RUTORRENT_PASS}"
 chmod 640 /etc/nginx/.rutorrent_htpasswd
 chown root:www-data /etc/nginx/.rutorrent_htpasswd
@@ -265,17 +241,6 @@ systemctl restart "php${PHP_VER}-fpm"
 systemctl enable -q nginx
 systemctl restart nginx
 msg_ok "Started services"
-
-msg_info "Writing credentials"
-{
-  echo "ruTorrent Credentials"
-  echo "====================="
-  echo "URL:      http://$(hostname -I | awk '{print $1}')/"
-  echo "Username: ${RUTORRENT_USER}"
-  echo "Password: ${RUTORRENT_PASS}"
-} >~/rutorrent.creds
-chmod 600 ~/rutorrent.creds
-msg_ok "Credentials written to ~/rutorrent.creds"
 
 motd_ssh
 customize
