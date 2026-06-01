@@ -18,11 +18,9 @@ $STD apt install -y \
   screen \
   rtorrent \
   nginx \
-  openssl \
   apache2-utils \
   unrar-free \
   mediainfo \
-  ffmpeg \
   python3 \
   python3-cloudscraper \
   python-is-python3 \
@@ -30,6 +28,7 @@ $STD apt install -y \
 msg_ok "Installed Dependencies"
 
 PHP_FPM="YES" setup_php
+setup_ffmpeg
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
