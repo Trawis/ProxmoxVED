@@ -131,7 +131,7 @@ action_change_password() {
   fi
 
   msg_ok "Password updated for '${username}'"
-  msg_info "New password: ${newpass}"
+  echo "  New password: ${newpass}"
   echo ""
   read -rp "Press Enter to continue..."
 }
@@ -302,14 +302,14 @@ action_show_status() {
   real_ip=$(detect_real_ip)
   upload_mb=$(detect_upload_limit)
 
-  msg_info "Configuration"
+  echo "--- Configuration ---"
   printf "  %-20s %s\n" "Upload limit:"    "${upload_mb} MiB"
   printf "  %-20s %s\n" "/RPC2 endpoint:"  "${rpc2}"
   printf "  %-20s %s\n" "Real IP forward:" "${real_ip}"
   printf "  %-20s %s\n" "PHP version:"     "${PHP_VER}"
   printf "  %-20s %s\n" "ruTorrent:"       "$(cat ~/.rutorrent 2>/dev/null || echo unknown)"
   echo ""
-  msg_info "Services"
+  echo "--- Services ---"
   for svc in rtorrent nginx "php${PHP_VER}-fpm"; do
     if systemctl is-active --quiet "$svc"; then
       msg_ok "${svc}"
@@ -318,7 +318,7 @@ action_show_status() {
     fi
   done
   echo ""
-  msg_info "Credentials"
+  echo "--- Credentials ---"
   if [[ -f ~/rutorrent.creds ]]; then
     cat ~/rutorrent.creds
   else
