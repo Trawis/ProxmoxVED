@@ -115,8 +115,6 @@ pm.max_children = 10
 pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
-php_admin_value[upload_max_filesize] = 32M
-php_admin_value[post_max_size] = 32M
 php_admin_value[error_reporting] = E_ERROR
 EOF
 rm -f "${PHP_POOL_DIR}/www.conf"
@@ -130,8 +128,6 @@ server {
 
     root /var/www/rutorrent;
     index index.html index.php;
-
-    client_max_body_size 32M;
 
     auth_basic "ruTorrent";
     auth_basic_user_file /etc/nginx/.rutorrent_htpasswd;
