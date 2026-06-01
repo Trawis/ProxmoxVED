@@ -308,14 +308,13 @@ action_show_status() {
   real_ip=$(detect_real_ip)
   upload_mb=$(detect_upload_limit)
 
-  printf "--- Configuration ---\n"
+  msg_ok "Configuration"
   printf "  %-20s %s\n" "Upload limit:"    "${upload_mb} MiB"
   printf "  %-20s %s\n" "/RPC2 endpoint:"  "${rpc2}"
   printf "  %-20s %s\n" "Real IP forward:" "${real_ip}"
   printf "  %-20s %s\n" "PHP version:"     "${PHP_VER}"
   printf "  %-20s %s\n" "ruTorrent:"       "$(cat ~/.rutorrent 2>/dev/null || printf unknown)"
-  printf "\n"
-  printf "--- Services ---\n"
+  msg_ok "Services"
   for svc in rtorrent nginx "php${PHP_VER}-fpm"; do
     if systemctl is-active --quiet "$svc"; then
       msg_ok "${svc}"
@@ -323,14 +322,12 @@ action_show_status() {
       msg_error "${svc}"
     fi
   done
-  printf "\n"
-  printf "--- Credentials ---\n"
+  msg_ok "Credentials"
   if [[ -f ~/rutorrent.creds ]]; then
     cat ~/rutorrent.creds
   else
     msg_error "~/rutorrent.creds not found"
   fi
-  printf "\n"
   msg_ok "Press Enter to return to menu"
   read -rp ""
 }
