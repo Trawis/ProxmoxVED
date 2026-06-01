@@ -30,14 +30,18 @@ function update_script() {
     exit
   fi
 
+  msg_info "Stopping Service"
+  systemctl stop filen-webdav
+  msg_ok "Stopped Service"
+
   msg_info "Updating ${APP}"
   cd /opt/filen-webdav
   $STD npm install @filen/webdav@latest
   msg_ok "Updated ${APP}"
 
-  msg_info "Restarting Service"
-  systemctl restart filen-webdav
-  msg_ok "Service Restarted"
+  msg_info "Starting Service"
+  systemctl start filen-webdav
+  msg_ok "Started Service"
   exit
 }
 
