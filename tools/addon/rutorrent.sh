@@ -131,9 +131,9 @@ action_change_password() {
   fi
 
   msg_ok "Password updated for '${username}'"
-  echo "  New password: ${newpass}"
-  echo ""
-  read -rp "Press Enter to continue..."
+  msg_info "New password: ${newpass}"
+  msg_ok "Press Enter to return to menu"
+  read -rp ""
 }
 
 action_toggle_rpc2() {
