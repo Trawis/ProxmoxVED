@@ -17,7 +17,6 @@ RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
 RUTORRENT_PASS="${RUTORRENT_PASS:-$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)}"
 RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
 RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
-RUTORRENT_MAX_UPLOAD_MB="${RUTORRENT_MAX_UPLOAD_MB:-32}"
 
 msg_info "Installing Dependencies"
 $STD apt install -y \
@@ -38,49 +37,12 @@ msg_ok "Installed Dependencies"
 PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
-msg_info "Setting up directories"
-mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
-chmod 755 /var/lib/rtorrent
-for i in "" 2 3 4 5 6 7 8; do
-  mp="/data${i}"
-  if [[ -d "${mp}" ]]; then
-    chmod 755 "${mp}" 2>/dev/null || true
-  fi
-done
-msg_ok "Set up directories"
-
 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
 [[ -f /var/www/rutorrent/index.html ]] || { msg_error "ruTorrent download failed — check network and GitHub API availability"; exit 1; }
 chown -R www-data:www-data /var/www/rutorrent
 
-msg_info "Patching filedrop upload limit"
-FILEDROP_CONF=/var/www/rutorrent/plugins/filedrop/conf.php
-if [[ -f "${FILEDROP_CONF}" ]]; then
-  UPLOAD_BYTES=$(( RUTORRENT_MAX_UPLOAD_MB * 1024 * 1024 ))
-  sed -i "s/\(\$maxFileSize\s*=\s*\)[0-9]*/\1${UPLOAD_BYTES}/" "${FILEDROP_CONF}"
-fi
-msg_ok "Patched filedrop (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
-
-msg_info "Generating plugins.ini"
-PLUGINS_DIR=/var/www/rutorrent/plugins
-PLUGINS_INI="/var/www/rutorrent/conf/plugins.ini"
-
-declare -A _BROKEN=([throttle]=1 [xmpp]=1 [dump]=1)
-
-: >"${PLUGINS_INI}"
-for plugin_dir in "${PLUGINS_DIR}"/*/; do
-  slug=$(basename "${plugin_dir}")
-  [[ -f "${plugin_dir}/init.js" ]] || continue
-  if [[ "${_BROKEN[${slug}]+_}" ]]; then
-    printf '[%s]\nenabled = no\n\n' "${slug}" >>"${PLUGINS_INI}"
-  else
-    printf '[%s]\nenabled = yes\n\n' "${slug}" >>"${PLUGINS_INI}"
-  fi
-done
-chown www-data:www-data "${PLUGINS_INI}"
-msg_ok "Generated plugins.ini"
-
 msg_info "Configuring rTorrent"
+mkdir -p /var/lib/rtorrent/{downloads,session,.watch}
 cat <<EOF >/var/lib/rtorrent/.rtorrent.rc
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
@@ -137,13 +99,13 @@ EOF
 chown www-data:www-data /var/www/rutorrent/conf/config.php
 msg_ok "Configured ruTorrent"
 
-msg_info "Setting up HTTP basic auth"
+msg_info "Setting up Authentication"
 htpasswd -bc /etc/nginx/.rutorrent_htpasswd "${RUTORRENT_USER}" "${RUTORRENT_PASS}"
 chmod 640 /etc/nginx/.rutorrent_htpasswd
 chown root:www-data /etc/nginx/.rutorrent_htpasswd
-msg_ok "Configured HTTP basic auth"
+msg_ok "Set up Authentication"
 
-msg_info "Configuring PHP-FPM pool"
+msg_info "Configuring PHP-FPM"
 PHP_POOL_DIR="/etc/php/${PHP_VER}/fpm/pool.d"
 cat <<EOF >"${PHP_POOL_DIR}/rutorrent.conf"
 [rutorrent]
@@ -157,33 +119,23 @@ pm.max_children = 10
 pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
+php_admin_value[upload_max_filesize] = 32M
+php_admin_value[post_max_size] = 32M
 php_admin_value[error_reporting] = E_ERROR
 EOF
 rm -f "${PHP_POOL_DIR}/www.conf"
-msg_ok "Configured PHP-FPM pool"
-
-msg_info "Configuring PHP upload limit"
-PHP_CONF_D="/etc/php/${PHP_VER}/fpm/conf.d"
-cat <<EOF >"${PHP_CONF_D}/99-rutorrent-upload.ini"
-upload_max_filesize = ${RUTORRENT_MAX_UPLOAD_MB}M
-post_max_size = ${RUTORRENT_MAX_UPLOAD_MB}M
-EOF
-msg_ok "Configured PHP upload limit (${RUTORRENT_MAX_UPLOAD_MB} MiB)"
+msg_ok "Configured PHP-FPM"
 
 msg_info "Configuring nginx"
-if [[ "${RUTORRENT_ENABLE_RPC2}" == "yes" ]]; then
-  RPC2_LOCATION="
+RPC2_BLOCK=""
+[[ "${RUTORRENT_ENABLE_RPC2}" == "yes" ]] && RPC2_BLOCK="
     location /RPC2 {
         include scgi_params;
         scgi_pass unix:///run/rtorrent/rtorrent.sock;
     }
 "
-else
-  RPC2_LOCATION=""
-fi
-
-if [[ "${RUTORRENT_ENABLE_REAL_IP}" == "yes" ]]; then
-  REAL_IP_BLOCK="
+REAL_IP_BLOCK=""
+[[ "${RUTORRENT_ENABLE_REAL_IP}" == "yes" ]] && REAL_IP_BLOCK="
     set_real_ip_from 127.0.0.1;
     set_real_ip_from 10.0.0.0/8;
     set_real_ip_from 172.16.0.0/12;
@@ -191,10 +143,6 @@ if [[ "${RUTORRENT_ENABLE_REAL_IP}" == "yes" ]]; then
     real_ip_header X-Forwarded-For;
     real_ip_recursive on;
 "
-else
-  REAL_IP_BLOCK=""
-fi
-
 cat <<EOF >/etc/nginx/sites-available/rutorrent
 server {
     listen 80;
@@ -203,11 +151,11 @@ server {
     root /var/www/rutorrent;
     index index.html index.php;
 
-    client_max_body_size ${RUTORRENT_MAX_UPLOAD_MB}M;
+    client_max_body_size 32M;
 
     auth_basic "ruTorrent";
     auth_basic_user_file /etc/nginx/.rutorrent_htpasswd;
-${REAL_IP_BLOCK}${RPC2_LOCATION}
+${REAL_IP_BLOCK}${RPC2_BLOCK}
     location / {
         try_files \$uri \$uri/ =404;
     }
@@ -227,7 +175,7 @@ ln -sf /etc/nginx/sites-available/rutorrent /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 msg_ok "Configured nginx"
 
-msg_info "Starting services"
+msg_info "Starting Services"
 systemctl enable -q --now rtorrent
 
 for i in {1..15}; do
@@ -240,7 +188,7 @@ done
 systemctl restart "php${PHP_VER}-fpm"
 systemctl enable -q nginx
 systemctl restart nginx
-msg_ok "Started services"
+msg_ok "Started Services"
 
 motd_ssh
 customize

@@ -35,11 +35,7 @@
             "type": "info"
         },
         {
-            "text": "The /RPC2 XMLRPC endpoint is disabled by default. Use the reconfigure tool to enable it for Sonarr, Radarr, or autodl-irssi.",
-            "type": "info"
-        },
-        {
-            "text": "Real IP forwarding is disabled by default. Enable it via the reconfigure tool only if nginx is behind a reverse proxy (Traefik, Cloudflare, NPM, etc.).",
+            "text": "The /RPC2 XMLRPC endpoint (required for Sonarr, Radarr, autodl-irssi) is disabled by default. Set RUTORRENT_ENABLE_RPC2=yes before install to enable it.",
             "type": "info"
         }
     ]
