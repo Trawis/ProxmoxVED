@@ -19,12 +19,8 @@ variables
 color
 catch_errors
 
-RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
 RUTORRENT_PASS="${RUTORRENT_PASS:-$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)}"
-RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
-RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
-
-export RUTORRENT_USER RUTORRENT_PASS RUTORRENT_ENABLE_RPC2 RUTORRENT_ENABLE_REAL_IP
+export RUTORRENT_PASS
 
 function update_script() {
   header_info
@@ -37,25 +33,29 @@ function update_script() {
   fi
 
   if check_for_gh_release "rutorrent" "Novik/ruTorrent"; then
+    msg_info "Stopping Service"
+    systemctl stop nginx
+    msg_ok "Stopped Service"
+
     msg_info "Backing up Configuration"
-    mkdir -p /root/rutorrent_bak
-    cp /var/www/rutorrent/conf/config.php /root/rutorrent_bak/config.php 2>/dev/null || true
-    cp /var/www/rutorrent/conf/plugins.ini /root/rutorrent_bak/plugins.ini 2>/dev/null || true
+    cp /var/www/rutorrent/conf/config.php /opt/rutorrent-config.php.bak 2>/dev/null || true
+    cp /var/www/rutorrent/conf/plugins.ini /opt/rutorrent-plugins.ini.bak 2>/dev/null || true
     msg_ok "Backed up Configuration"
 
     CLEAN_INSTALL=1 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
 
     msg_info "Restoring Configuration"
-    [[ -f /root/rutorrent_bak/config.php ]] && cp /root/rutorrent_bak/config.php /var/www/rutorrent/conf/config.php
-    [[ -f /root/rutorrent_bak/plugins.ini ]] && cp /root/rutorrent_bak/plugins.ini /var/www/rutorrent/conf/plugins.ini
-    rm -rf /root/rutorrent_bak
+    [[ -f /opt/rutorrent-config.php.bak ]] && cp /opt/rutorrent-config.php.bak /var/www/rutorrent/conf/config.php
+    [[ -f /opt/rutorrent-plugins.ini.bak ]] && cp /opt/rutorrent-plugins.ini.bak /var/www/rutorrent/conf/plugins.ini
+    rm -f /opt/rutorrent-config.php.bak /opt/rutorrent-plugins.ini.bak
     chown -R www-data:www-data /var/www/rutorrent
     msg_ok "Restored Configuration"
 
+    msg_info "Starting Service"
+    systemctl start nginx
+    msg_ok "Started Service"
     msg_ok "Updated ${APP} successfully"
   fi
-
-  cleanup_lxc
   exit
 }
 
@@ -67,5 +67,5 @@ msg_ok "Completed Successfully!\n"
 echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW} Access it using the following URL:${CL}"
 echo -e "${TAB}${GATEWAY}${BGN}http://${IP}/${CL}"
-echo -e "${INFO}${YW} Username: ${BGN}${RUTORRENT_USER}${CL}"
+echo -e "${INFO}${YW} Username: ${BGN}rutorrent${CL}"
 echo -e "${INFO}${YW} Password: ${BGN}${RUTORRENT_PASS}${CL}"

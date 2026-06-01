@@ -13,11 +13,6 @@ setting_up_container
 network_check
 update_os
 
-RUTORRENT_USER="${RUTORRENT_USER:-rutorrent}"
-RUTORRENT_PASS="${RUTORRENT_PASS:-$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)}"
-RUTORRENT_ENABLE_RPC2="${RUTORRENT_ENABLE_RPC2:-no}"
-RUTORRENT_ENABLE_REAL_IP="${RUTORRENT_ENABLE_REAL_IP:-no}"
-
 msg_info "Installing Dependencies"
 $STD apt install -y \
   screen \
@@ -38,7 +33,7 @@ PHP_FPM="YES" setup_php
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
 
 fetch_and_deploy_gh_release "rutorrent" "Novik/ruTorrent" "tarball" "latest" "/var/www/rutorrent"
-[[ -f /var/www/rutorrent/index.html ]] || { msg_error "ruTorrent download failed — check network and GitHub API availability"; exit 1; }
+[[ -f /var/www/rutorrent/index.html ]] || { msg_error "ruTorrent download failed"; exit 1; }
 chown -R www-data:www-data /var/www/rutorrent
 
 msg_info "Configuring rTorrent"
@@ -53,10 +48,9 @@ pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
 execute.nothrow = chmod,666,/run/rtorrent/rtorrent.sock
 EOF
-
 cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
-Description=rTorrent via screen
+Description=rTorrent
 After=network.target
 
 [Service]
@@ -75,6 +69,7 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+systemctl enable -q --now rtorrent
 msg_ok "Configured rTorrent"
 
 msg_info "Configuring ruTorrent"
@@ -100,7 +95,8 @@ chown www-data:www-data /var/www/rutorrent/conf/config.php
 msg_ok "Configured ruTorrent"
 
 msg_info "Setting up Authentication"
-htpasswd -bc /etc/nginx/.rutorrent_htpasswd "${RUTORRENT_USER}" "${RUTORRENT_PASS}"
+RUTORRENT_PASS="${RUTORRENT_PASS:-$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 16)}"
+$STD htpasswd -bc /etc/nginx/.rutorrent_htpasswd "rutorrent" "${RUTORRENT_PASS}"
 chmod 640 /etc/nginx/.rutorrent_htpasswd
 chown root:www-data /etc/nginx/.rutorrent_htpasswd
 msg_ok "Set up Authentication"
@@ -127,22 +123,6 @@ rm -f "${PHP_POOL_DIR}/www.conf"
 msg_ok "Configured PHP-FPM"
 
 msg_info "Configuring nginx"
-RPC2_BLOCK=""
-[[ "${RUTORRENT_ENABLE_RPC2}" == "yes" ]] && RPC2_BLOCK="
-    location /RPC2 {
-        include scgi_params;
-        scgi_pass unix:///run/rtorrent/rtorrent.sock;
-    }
-"
-REAL_IP_BLOCK=""
-[[ "${RUTORRENT_ENABLE_REAL_IP}" == "yes" ]] && REAL_IP_BLOCK="
-    set_real_ip_from 127.0.0.1;
-    set_real_ip_from 10.0.0.0/8;
-    set_real_ip_from 172.16.0.0/12;
-    set_real_ip_from 192.168.0.0/16;
-    real_ip_header X-Forwarded-For;
-    real_ip_recursive on;
-"
 cat <<EOF >/etc/nginx/sites-available/rutorrent
 server {
     listen 80;
@@ -155,7 +135,7 @@ server {
 
     auth_basic "ruTorrent";
     auth_basic_user_file /etc/nginx/.rutorrent_htpasswd;
-${REAL_IP_BLOCK}${RPC2_BLOCK}
+
     location / {
         try_files \$uri \$uri/ =404;
     }
@@ -176,18 +156,14 @@ rm -f /etc/nginx/sites-enabled/default
 msg_ok "Configured nginx"
 
 msg_info "Starting Services"
-systemctl enable -q --now rtorrent
-
 for i in {1..15}; do
   [[ -S /run/rtorrent/rtorrent.sock ]] && break
   sleep 1
 done
 [[ -S /run/rtorrent/rtorrent.sock ]] \
   || msg_warn "rTorrent socket not found after 15 s — check 'systemctl status rtorrent'"
-
 systemctl restart "php${PHP_VER}-fpm"
-systemctl enable -q nginx
-systemctl restart nginx
+systemctl enable -q --now nginx
 msg_ok "Started Services"
 
 motd_ssh
