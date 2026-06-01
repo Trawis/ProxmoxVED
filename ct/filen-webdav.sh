@@ -15,9 +15,6 @@ var_version="${var_version:-13}"
 var_arm64="${var_arm64:-no}"
 var_unprivileged="${var_unprivileged:-1}"
 
-# Always pull the install script from this branch
-COMMUNITY_SCRIPTS_URL="https://raw.githubusercontent.com/Trawis/ProxmoxVED/feature/filen-webdav"
-
 header_info "$APP"
 variables
 color
