@@ -22,8 +22,7 @@ $STD apt install -y \
   unrar-free \
   mediainfo \
   python3-cloudscraper \
-  python-is-python3 \
-  sox
+  python-is-python3
 msg_ok "Installed Dependencies"
 
 PHP_FPM="YES" setup_php
