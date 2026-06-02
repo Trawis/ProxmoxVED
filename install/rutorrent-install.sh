@@ -58,7 +58,6 @@ RuntimeDirectory=rtorrent
 RuntimeDirectoryMode=0755
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
-WorkingDirectory=/var/lib/rtorrent
 TimeoutStartSec=10
 Restart=on-failure
 RestartSec=5
