@@ -39,7 +39,7 @@ cat <<EOF >/root/.rtorrent.rc
 directory.default.set = /var/lib/rtorrent/downloads
 session.path.set = /var/lib/rtorrent/session
 network.scgi.open_local = /run/rtorrent/rtorrent.sock
-network.port_range.set = 6881-6881
+network.port_range.set = 50000-50000
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
