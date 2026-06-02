@@ -45,6 +45,9 @@ schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
 execute.nothrow = chown,root:www-data,/run/rtorrent/rtorrent.sock
 execute.nothrow = chmod,660,/run/rtorrent/rtorrent.sock
 EOF
+msg_ok "Configured rTorrent"
+
+msg_info "Creating Service"
 cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
 Description=rTorrent
@@ -67,7 +70,7 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 systemctl enable -q --now rtorrent
-msg_ok "Configured rTorrent"
+msg_ok "Created Service"
 
 msg_info "Configuring ruTorrent"
 cat <<'EOF' >/var/www/rutorrent/conf/config.php

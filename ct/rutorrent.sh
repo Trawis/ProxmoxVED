@@ -53,9 +53,11 @@ function update_script() {
     chown -R www-data:www-data /var/www/rutorrent
     msg_ok "Restored Configuration"
 
-    msg_info "Starting Service"
+    PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
+    msg_info "Restarting Services"
+    systemctl restart "php${PHP_VER}-fpm"
     systemctl start nginx
-    msg_ok "Started Service"
+    msg_ok "Restarted Services"
     msg_ok "Updated ${APP} successfully"
   fi
   exit
