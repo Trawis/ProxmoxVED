@@ -5,6 +5,7 @@
     "date_created": "2026-05-11",
     "type": "ct",
     "updateable": true,
+    "has_arm": false,
     "privileged": false,
     "interface_port": 80,
     "documentation": "https://github.com/Novik/ruTorrent/wiki",

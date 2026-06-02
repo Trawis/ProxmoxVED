@@ -42,7 +42,8 @@ network.port_range.set = 50000-50000
 network.port_random.set = no
 pieces.hash.on_completion.set = no
 schedule2 = watch_directory,5,5,load.start=/var/lib/rtorrent/.watch/*.torrent
-execute.nothrow = chmod,666,/run/rtorrent/rtorrent.sock
+execute.nothrow = chown,root:www-data,/run/rtorrent/rtorrent.sock
+execute.nothrow = chmod,660,/run/rtorrent/rtorrent.sock
 EOF
 cat <<EOF >/etc/systemd/system/rtorrent.service
 [Unit]
@@ -55,7 +56,7 @@ Group=root
 Type=forking
 KillMode=none
 RuntimeDirectory=rtorrent
-RuntimeDirectoryMode=0755
+RuntimeDirectoryMode=0750
 ExecStart=/usr/bin/screen -d -m -S rtorrent /usr/bin/rtorrent
 ExecStop=/usr/bin/bash -c 'screen -S rtorrent -X quit || true'
 TimeoutStartSec=10

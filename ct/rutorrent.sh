@@ -14,6 +14,7 @@ var_os="${var_os:-debian}"
 var_version="${var_version:-13}"
 var_unprivileged="${var_unprivileged:-1}"
 var_nesting="${var_nesting:-0}"
+var_arm64="${var_arm64:-no}"
 
 header_info "$APP"
 variables
