@@ -6,7 +6,7 @@ source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxV
 # Source: https://github.com/Novik/ruTorrent
 
 APP="ruTorrent"
-var_tags="${var_tags:-torrent;bittorrent;download}"
+var_tags="${var_tags:-torrent}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-2048}"
 var_disk="${var_disk:-8}"
