@@ -32,7 +32,7 @@ function update_script() {
   check_container_resources
 
   if [[ ! -d /var/www/rutorrent ]]; then
-    msg_error "No ${APP} Installation Found!"
+    msg_error "No ruTorrent Installation Found!"
     exit
   fi
 
@@ -63,7 +63,7 @@ build_container
 description
 
 msg_ok "Completed Successfully!\n"
-echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
+echo -e "${CREATING}${GN}ruTorrent setup has been successfully initialized!${CL}"
 echo -e "${INFO}${YW}Access it using the following URL:${CL}"
 echo -e "${GATEWAY}${BGN}http://${IP}/${CL}"
 echo -e "${INFO}${YW}Username: ${BGN}rutorrent${CL}"
