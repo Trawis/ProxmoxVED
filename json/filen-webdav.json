@@ -1,0 +1,48 @@
+{
+    "name": "Filen WebDAV",
+    "slug": "filen-webdav",
+    "categories": [11],
+    "date_created": "2026-09-24",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "interface_port": 1900,
+    "documentation": "https://github.com/FilenCloudDienste/filen-webdav",
+    "website": "https://filen.io",
+    "repository": "https://github.com/FilenCloudDienste/filen-webdav",
+    "architectures": ["amd64", "arm64"],
+    "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/filen.webp",
+    "description": "Filen WebDAV exposes your Filen cloud storage as a standard WebDAV endpoint running in proxy mode. Each WebDAV client authenticates with its own Filen email and password — the container itself is configured with no Filen account and stores no Filen credentials. Any WebDAV-compatible client — including Finder, Windows Explorer, rclone, and Infuse — can mount the share directly.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/filen-webdav.sh",
+            "config_path": "/opt/filen-webdav/server.js",
+            "resources": {
+                "cpu": 1,
+                "ram": 512,
+                "hdd": 4,
+                "os": "Debian",
+                "version": "13"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": [
+        {
+            "text": "Each WebDAV client authenticates with its own Filen email and password (formatted as password=<password>&twoFactorAuthentication=<code> if 2FA is enabled). The container's server.js has no Filen account configured.",
+            "type": "info"
+        },
+        {
+            "text": "Credentials are sent via HTTP Basic Auth. HTTPS is not enabled by default — plain HTTP is fine on a trusted LAN, but place a TLS-terminating reverse proxy (nginx, Caddy, or NPM) in front before exposing this to an untrusted network.",
+            "type": "warning"
+        },
+        {
+            "text": "Not currently eligible for upstream community-scripts/ProxmoxVED submission: FilenCloudDienste/filen-webdav has around 140 GitHub stars, well under the project's 600+ star requirement for new scripts. This script is intended for fork-only / personal use until that changes.",
+            "type": "warning"
+        }
+    ]
+}
