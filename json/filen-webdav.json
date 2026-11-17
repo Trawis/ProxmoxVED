@@ -1,0 +1,52 @@
+{
+  "name": "Filen WebDAV",
+  "slug": "filen-webdav",
+  "categories": [
+    11
+  ],
+  "date_created": "2026-11-17",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "interface_port": 1900,
+  "documentation": "https://github.com/FilenCloudDienste/filen-webdav",
+  "website": "https://filen.io",
+  "repository": "https://github.com/FilenCloudDienste/filen-webdav",
+  "architectures": [
+    "amd64",
+    "arm64"
+  ],
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/filen.webp",
+  "description": "Filen WebDAV is Filen's official WebDAV server for its end-to-end encrypted cloud storage. In proxy mode it acts as a gateway for several Filen accounts, each client signing in with its own credentials. Any WebDAV client, such as Finder, Windows Explorer, rclone or Infuse, can mount the storage.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/filen-webdav.sh",
+      "config_path": "/opt/filen-webdav/server.js",
+      "resources": {
+        "cpu": 1,
+        "ram": 512,
+        "hdd": 4,
+        "os": "Debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": [
+    {
+      "text": "Sign in with your Filen email as username and password=<password> as password; append &twoFactorAuthentication=<code> if 2FA is on.",
+      "type": "info"
+    },
+    {
+      "text": "Credentials travel as HTTP Basic Auth over plain HTTP. Keep it on a trusted network; a TLS reverse proxy protects credentials in transit but does not make public exposure safe.",
+      "type": "warning"
+    }
+  ],
+  "platforms": [
+    "pve"
+  ]
+}
